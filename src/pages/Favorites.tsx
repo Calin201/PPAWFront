@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Recipe } from '../models/recipe';
+import { useEffect, useState } from 'react';
+import { Recipe } from '../models/Recipe';
 import RecipeCard from '../components/RecipeCard';
 import { FavoriteService } from '../services/FavoriteService';
 import { useNavigate } from 'react-router-dom';
@@ -58,7 +58,15 @@ const Favorites = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {favorites.map((recipe) => (
-            <RecipeCard key={recipe.id} recipe={recipe} />
+            <RecipeCard
+              key={recipe.id}
+              recipe={recipe}
+              index={recipe.id}
+              onDelete={() => setFavorites(favorites.filter(fav => fav.id !== recipe.id))}
+              onUpdate={(updatedRecipe) => setFavorites(
+                favorites.map(fav => fav.id === updatedRecipe.id ? updatedRecipe : fav)
+              )}
+            />
           ))}
         </div>
       )}

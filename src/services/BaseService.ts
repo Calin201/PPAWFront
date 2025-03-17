@@ -2,7 +2,7 @@ import axiosInstance from './api/axiosConfig';
 
 export class BaseService<T> {
     protected endpoint: string;
-
+    protected baseUrl = 'https://localhost:7117/api';
     constructor(endpoint: string) {
         this.endpoint = endpoint;
     }
@@ -14,6 +14,11 @@ export class BaseService<T> {
 
     async getById(id: number | string): Promise<T> {
         const response = await axiosInstance.get<T>(`${this.endpoint}/${id}`);
+        return response.data;
+    }
+
+    async getByParamId(param: string, id: number | string): Promise<T[]> {
+        const response = await axiosInstance.get<T[]>(`${this.endpoint}/${param}/${id}`);
         return response.data;
     }
 

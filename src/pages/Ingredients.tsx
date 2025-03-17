@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Ingredient, UnitOfMeasurement } from '../models/Recipe';
-import IngredientService from '../services/IngredientService';
+import { IngredientService } from '../services/IngredientService';
+import { FiEdit2, FiTrash2, FiX } from 'react-icons/fi';
 
 const Ingredients = () => {
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
@@ -11,6 +12,8 @@ const Ingredients = () => {
     ingredientName: '',
     unitId: 1
   });
+  const [editingIngredient, setEditingIngredient] = useState<Ingredient | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const ingredientService = new IngredientService();
 
@@ -42,12 +45,36 @@ const Ingredients = () => {
       }
       const created = await ingredientService.createIngredient({
         ...newIngredient,
-        unit
+        unitId: unit.id 
       });
       setIngredients(prev => [...prev, created]);
       setNewIngredient({ ingredientName: '', unitId: 1 });
     } catch (error) {
       console.error('Error adding ingredient:', error);
+    }
+  };
+
+  const handleEditClick = (ingredient: Ingredient) => {
+    setEditingIngredient(ingredient);
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditSave = async () => {
+    if (!editingIngredient) return;
+
+    try {
+      const updated = await ingredientService.updateIngredient(editingIngredient.id, {
+        ingredientName: editingIngredient.ingredientName,
+        unitId: editingIngredient.unitId
+      });
+
+      setIngredients(prev => 
+        prev.map(ing => ing.id === updated.id ? updated : ing)
+      );
+      setIsEditModalOpen(false);
+      setEditingIngredient(null);
+    } catch (error) {
+      console.error('Error updating ingredient:', error);
     }
   };
 
@@ -141,18 +168,86 @@ const Ingredients = () => {
                 <h3 className="text-lg font-semibold text-gray-800">{ingredient.ingredientName}</h3>
                 <p className="text-gray-600">Unit: {ingredient.unit?.unitName}</p>
               </div>
-              <button
-                onClick={() => handleDeleteIngredient(ingredient.id)}
-                className="text-red-500 hover:text-red-700 transition-colors"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleEditClick(ingredient)}
+                  className="text-blue-500 hover:text-blue-700 transition-colors"
+                >
+                  <FiEdit2 className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={() => handleDeleteIngredient(ingredient.id)}
+                  className="text-red-500 hover:text-red-700 transition-colors"
+                >
+                  <FiTrash2 className="h-5 w-5" />
+                </button>
+              </div>
             </div>
           </div>
         ))}
       </div>
+
+      {/* Edit Modal */}
+      {isEditModalOpen && editingIngredient && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Edit Ingredient</h2>
+              <button
+                onClick={() => setIsEditModalOpen(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <FiX className="h-6 w-6" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Name</label>
+                <input
+                  type="text"
+                  value={editingIngredient.ingredientName}
+                  onChange={(e) => setEditingIngredient(prev => ({
+                    ...prev!,
+                    ingredientName: e.target.value
+                  }))}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Unit</label>
+                <select
+                  value={editingIngredient.unitId}
+                  onChange={(e) => setEditingIngredient(prev => ({
+                    ...prev!,
+                    unitId: Number(e.target.value)
+                  }))}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
+                >
+                  {units.map(unit => (
+                    <option key={unit.id} value={unit.id}>
+                      {unit.unitName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleEditSave}
+                  className="px-4 py-2 text-white bg-purple-600 rounded-md hover:bg-purple-700"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,23 +1,26 @@
 export interface User {
     id: number;
-    username: string;
-    email: string;
-    password: string;
+    username: string | null;
+    email: string | null;
+    password: string | null;
     subscriptionId: number;
     joinDate: string;
-    alias: string;
+    alias: string | null;
     totalRecipes: number;
-    subscription?: Subscription;
-    favorites?: Favorite[];
-    dietaryPreferences?: UserDietaryPreference[];
-    recipes?: Recipe[];
+    isDeleted: boolean;
+    deletedAt: string | null;
+    subscription: Subscription | null;
+    favorites: Favorite[] | null;
+    dietaryPreferences: UserDietaryPreference[] | null;
+    recipes: Recipe[] | null;
 }
 
 export interface Subscription {
     id: number;
-    subscriptionType: string;
-    users?: User[];
-    recipes?: Recipe[];
+    subscriptionType: string | null;
+    price: number;
+    users: User[] | null;
+    recipes: Recipe[] | null;
 }
 
 export interface Recipe {
@@ -26,47 +29,68 @@ export interface Recipe {
     description: string;
     prepTime: number;
     cookTime: number;
+    servings: number;
     instructions: string;
     authorId: number;
     subscriptionId: number;
-    recipeIngredients?: RecipeIngredient[];
+    author: User;
+    subscription: Subscription;
+    dietaryPreferences: RecipeDietaryPreference[];
+    favorites: Favorite[];
+    recipeIngredients: RecipeIngredient[];
 }
 
 export interface RecipeIngredient {
-    id: number;
     recipeId: number;
     ingredientId: number;
     quantity: number;
-    unitId: number;
+    ingredient: Ingredient | null;
 }
 
 export interface Ingredient {
     id: number;
     ingredientName: string;
     unitId: number;
-    unit?: UnitOfMeasurement;
+    unit: UnitOfMeasurement | null;
+    recipeIngredients: RecipeIngredient[] | null;
 }
 
 export interface UnitOfMeasurement {
     id: number;
     unitName: string;
+    ingredients: Ingredient[];
 }
 
 export interface DietaryPreference {
     id: number;
-    preferenceName: string;
+    preferenceName: string | null;
+    userDietaryPreferences: UserDietaryPreference[] | null;
+    recipeDietaryPreferences: RecipeDietaryPreference[] | null;
 }
 
 export interface UserDietaryPreference {
-    id: number;
     userId: number;
-    dietaryPreferenceId: number;
-    user?: User;
-    dietaryPreference?: DietaryPreference;
+    preferenceId: number;
+    user: User | null;
+    preference: DietaryPreference | null;
+}
+
+export interface RecipeDietaryPreference {
+    recipeId: number;
+    preferenceId: number;
+    recipe: Recipe | null;
+    preference: DietaryPreference | null;
 }
 
 export interface Favorite {
     id: number;
     userId: number;
     recipeId: number;
+    user: User | null;
+    recipe: Recipe | null;
+}
+
+export interface CreateIngredientRequest {
+    ingredientName: string;
+    unitId: number;
 }

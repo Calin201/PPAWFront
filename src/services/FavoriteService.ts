@@ -1,46 +1,36 @@
 import { Favorite } from '../models/Recipe';
 
 export class FavoriteService {
-    private mockFavorites: Favorite[] = [
-        {
-            id: 1,
-            userId: 1,
-            recipeId: 1
-        },
-        {
-            id: 2,
-            userId: 1,
-            recipeId: 2
-        }
-    ];
+    private baseUrl = 'https://localhost:7117/api';
 
     async getFavoritesByUserId(userId: number): Promise<Favorite[]> {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        return this.mockFavorites.filter(f => f.userId === userId);
+        const response = await fetch(`${this.baseUrl}/favorites/user/${userId}`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch favorites');
+        }
+        return response.json();
     }
 
-    async addFavorite(favorite: Omit<Favorite, 'id'>): Promise<Favorite> {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        const newFavorite: Favorite = {
-            ...favorite,
-            id: this.mockFavorites.length + 1
-        };
-        
-        this.mockFavorites.push(newFavorite);
-        return newFavorite;
+    async addFavorite(userId: number, recipeId: number): Promise<Favorite> {
+        const response = await fetch(`${this.baseUrl}/favorites`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ userId, recipeId })
+        });
+        if (!response.ok) {
+            throw new Error('Failed to add favorite');
+        }
+        return response.json();
     }
 
-    async removeFavorite(userId: number, recipeId: number): Promise<Favorite | null> {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        const index = this.mockFavorites.findIndex(
-            f => f.userId === userId && f.recipeId === recipeId
-        );
-        
-        if (index === -1) return null;
-        
-        const [removedFavorite] = this.mockFavorites.splice(index, 1);
-        return removedFavorite;
+    async removeFavorite(userId: number, recipeId: number): Promise<void> {
+        const response = await fetch(`${this.baseUrl}/favorites/${userId}/${recipeId}`, {
+            method: 'DELETE'
+        });
+        if (!response.ok) {
+            throw new Error('Failed to remove favorite');
+        }
     }
 }

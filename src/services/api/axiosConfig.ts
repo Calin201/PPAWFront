@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'https://localhost:7062'; // Updated to match your Swagger URL
+const API_BASE_URL = 'https://localhost:7117/api'; // Updated to match the correct API URL
 
 const axiosInstance = axios.create({
     baseURL: API_BASE_URL,

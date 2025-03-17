@@ -1,25 +1,45 @@
 import React, { useEffect, useState } from 'react';
-import { Recipe } from '../models/Recipe';
+import { Recipe, Ingredient } from '../models/Recipe';
 import { RecipeService } from '../services/RecipeService';
+import { IngredientService } from '../services/IngredientService';
 import RecipeCard from '../components/RecipeCard';
 import FoodLoader from '../components/FoodLoader';
 import Snackbar from '../components/Snackbar';
 import { motion } from 'framer-motion';
 import { GiCookingPot } from 'react-icons/gi';
+import { FiPlus } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
 
 const Recipes: React.FC = () => {
     const [recipes, setRecipes] = useState<Recipe[]>([]);
+    const [ingredients, setIngredients] = useState<Ingredient[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [searchValue, setSearchValue] = useState('');
+    const navigate = useNavigate();
 
-    // Efect pentru încărcarea rețetelor
     useEffect(() => {
-        const fetchRecipes = async () => {
+        const fetchData = async () => {
             try {
                 const recipeService = new RecipeService();
-                const fetchedRecipes = await recipeService.getAllRecipes();
-                setRecipes(fetchedRecipes);
+                const ingredientService = new IngredientService();
+                
+                const [fetchedRecipes, fetchedIngredients] = await Promise.all([
+                    recipeService.getAllRecipes(),
+                    ingredientService.getAllIngredients()
+                ]);
+
+                // Enhance recipes with ingredient details
+                const enhancedRecipes = fetchedRecipes.map(recipe => ({
+                    ...recipe,
+                    recipeIngredients: recipe.recipeIngredients.map(ri => ({
+                        ...ri,
+                        ingredient: fetchedIngredients.find(i => i.id === ri.ingredientId) || null
+                    }))
+                }));
+
+                setRecipes(enhancedRecipes);
+                setIngredients(fetchedIngredients);
                 setError(null);
             } catch (err) {
                 setError('Oops! Could not fetch your delicious recipes. Please try again!');
@@ -29,21 +49,23 @@ const Recipes: React.FC = () => {
             }
         };
 
-        fetchRecipes();
+        fetchData();
     }, []);
 
-    // Efect pentru simularea unei erori după 3 secunde
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setError('🔥 Oops! The kitchen got too hot! Our chefs are cooling things down...');
-        }, 3000);
+    const handleAddRecipe = () => {
+        navigate('/recipes/new');
+    };
 
-        return () => clearTimeout(timer);
-    }, []);
-    const filteredRecipes = recipes.filter(recipe =>
-        recipe.recipeName.toLowerCase().includes(searchValue.toLowerCase()) ||
-        recipe.description.toLowerCase().includes(searchValue.toLowerCase())
-    );
+    const handleDeleteRecipe = (deletedRecipeId: number) => {
+        setRecipes(prevRecipes => prevRecipes.filter(recipe => recipe.id !== deletedRecipeId));
+    };
+
+    const handleUpdateRecipe = (updatedRecipe: Recipe) => {
+        setRecipes(prevRecipes => prevRecipes.map(recipe => 
+            recipe.id === updatedRecipe.id ? updatedRecipe : recipe
+        ));
+    };
+
     if (loading) {
         return <FoodLoader />;
     }
@@ -59,112 +81,56 @@ const Recipes: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            
-            <div className="container mx-auto px-4 py-8">
-                {/* Header with animated background */}
-                <motion.div
-                    className="text-center mb-12 relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 p-8"
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5 }}
-                >
-                    <motion.div
-                        className="absolute inset-0 bg-white opacity-10"
-                        animate={{
-                            backgroundPosition: ['0% 0%', '100% 100%'],
-                        }}
-                        transition={{
-                            duration: 20,
-                            repeat: Infinity,
-                            repeatType: "reverse"
-                        }}
-                        style={{
-                            backgroundImage: 'url("data:image/svg+xml,%3Csvg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="%239C92AC" fill-opacity="0.4"%3E%3Cpath d="M0 0h20L0 20z"/%3E%3C/g%3E%3C/svg%3E")'
-                        }}
+        <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8 relative">
+            {/* Search Bar */}
+            <div className="max-w-7xl mx-auto mb-8">
+                <div className="flex items-center bg-white rounded-lg shadow-sm p-2">
+                    <input
+                        type="text"
+                        placeholder="Search recipes..."
+                        className="flex-1 px-4 py-2 text-gray-700 focus:outline-none"
+                        value={searchValue}
+                        onChange={(e) => setSearchValue(e.target.value)}
                     />
-                    
-                    <motion.h1
-                        className="text-4xl font-bold text-white mb-4 relative"
-                        initial={{ scale: 0.9 }}
-                        animate={{ scale: 1 }}
-                        transition={{ duration: 0.5, delay: 0.2 }}
-                    >
-                        <GiCookingPot className="inline-block mr-2 text-5xl" />
-                        Discover Delicious Recipes
-                    </motion.h1>
-                    
-                    <motion.p
-                        className="text-lg text-white max-w-2xl mx-auto relative"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.5, delay: 0.4 }}
-                    >
-                        Explore our collection of mouth-watering recipes, perfect for any occasion
-                    </motion.p>
-
-                    {/* Search Bar */}
-                    <motion.div
-                        className="mt-6 max-w-xl mx-auto relative"
-                        initial={{ scale: 0.9, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ delay: 0.6 }}
-                    >
-                        <input
-                            type="text"
-                            placeholder="Search recipes..."
-                            value={searchValue}
-                            onChange={(e) => setSearchValue(e.target.value)}
-                            className="w-full px-6 py-3 rounded-full text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-300 transition-shadow duration-200"
-                        />
-                        <motion.button
-                            className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-emerald-500 text-white px-6 py-2 rounded-full"
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                        >
-                            Search
-                        </motion.button>
-                    </motion.div>
-                </motion.div>
-
-                {recipes.length === 0 ? (
-                    <motion.div
-                        className="text-center py-12"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                    >
-                        <p className="text-gray-600 text-lg">
-                            No recipes found. Check back later for new additions!
-                        </p>
-                    </motion.div>
-                ) : (
-                    <motion.div
-                        variants={container}
-                        initial="hidden"
-                        animate="show"
-                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-                    >
-                        {recipes.map((recipe, index) => (
-                            <motion.div
-                                key={recipe.id}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.1 }}
-                                whileHover={{ y: -5 }}
-                            >
-                                <RecipeCard recipe={recipe} index={index} />
-                            </motion.div>
-                        ))}
-                    </motion.div>
-                )}
+                    <GiCookingPot className="h-6 w-6 text-gray-400 mr-2" />
+                </div>
             </div>
 
-            {/* Snackbar pentru erori */}
-            <Snackbar 
-                message={error} 
-                onClose={() => setError(null)}
-                type="error"
-            />
+            {/* Recipe Grid */}
+            <motion.div
+                variants={container}
+                initial="hidden"
+                animate="show"
+                className="max-w-7xl mx-auto grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+            >
+                {recipes
+                    .filter(recipe =>
+                        recipe.recipeName?.toLowerCase().includes(searchValue.toLowerCase()) ||
+                        recipe.description?.toLowerCase().includes(searchValue.toLowerCase())
+                    )
+                    .map((recipe, index) => (
+                        <RecipeCard 
+                            key={recipe.id} 
+                            recipe={recipe} 
+                            index={index} 
+                            onDelete={handleDeleteRecipe}
+                            onUpdate={handleUpdateRecipe}
+                        />
+                    ))}
+            </motion.div>
+
+            {/* Floating Action Button */}
+            <motion.button
+                className="fixed right-8 bottom-8 w-14 h-14 bg-emerald-500 rounded-full shadow-lg flex items-center justify-center text-white hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={handleAddRecipe}
+            >
+                <FiPlus className="w-6 h-6" />
+            </motion.button>
+
+            {/* Error Snackbar */}
+            {error && <Snackbar message={error} onClose={() => setError(null)} type="error" />}
         </div>
     );
 };

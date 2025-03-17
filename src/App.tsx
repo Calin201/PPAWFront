@@ -1,40 +1,98 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import Recipes from './pages/Recipes';
-import Auth from './pages/Auth';
+import NewRecipe from './pages/NewRecipe';
+import Login from './pages/Login';
 import NotFound from './pages/NotFound';
 import Favorites from './pages/Favorites';
 import Ingredients from './pages/Ingredients';
 import Profile from './pages/Profile';
+import MyRecipes from './pages/MyRecipes';
 import Navbar from './components/Navbar';
+import Subscriptions from './pages/Subscriptions';
 
-const AppContent = () => {
-  const location = useLocation();
-  const isAuthPage = location.pathname === '/auth';
-
-  return (
-    <div className="min-h-screen">
-      {!isAuthPage && <Navbar />}
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/recipes" element={<Recipes />} />
-        <Route path="/my-recipes" element={<Navigate to="/recipes" replace />} />
-        <Route path="/favorites" element={<Favorites />} />
-        <Route path="/ingredients" element={<Ingredients />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/auth" element={<Auth />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </div>
-  );
+// Protected Route component
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+    const userId = localStorage.getItem('userId');
+    if (!userId) {
+        return <Navigate to="/login" replace />;
+    }
+    return <>{children}</>;
 };
 
-function App() {
-  return (
-    <Router>
-      <AppContent />
-    </Router>
-  );
-}
+const AppContent = () => {
+    const location = useLocation();
+    const isLoginPage = location.pathname === '/login';
+
+    return (
+        <div className="min-h-screen">
+            {!isLoginPage && <Navbar />}
+            <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/recipes" element={<Recipes />} />
+                <Route path="/login" element={<Login />} />
+                <Route
+                    path="/recipes/new"
+                    element={
+                        <ProtectedRoute>
+                            <NewRecipe />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/my-recipes"
+                    element={
+                        <ProtectedRoute>
+                            <MyRecipes />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/favorites"
+                    element={
+                        <ProtectedRoute>
+                            <Favorites />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/ingredients"
+                    element={
+                        <ProtectedRoute>
+                            <Ingredients />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/profile"
+                    element={
+                        <ProtectedRoute>
+                            <Profile />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/subscriptions"
+                    element={
+                        <ProtectedRoute>
+                            <Subscriptions />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route path="*" element={<NotFound />} />
+            </Routes>
+        </div>
+    );
+};
+
+const App = () => {
+    return (
+        <Router>
+            <AppContent />
+
+        </Router>
+        
+    );
+};
 
 export default App;

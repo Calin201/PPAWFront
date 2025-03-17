@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { GiCookingPot, GiKnifeFork, GiSpellBook } from 'react-icons/gi';
 import { MdOutlineRestaurantMenu } from 'react-icons/md';
 import FoodLoader from '../components/FoodLoader';
+import SplashCursor from '../components/common/SplashCursor';
 
 const HomePage: React.FC = () => {
     const navigate = useNavigate();
@@ -14,7 +15,6 @@ const HomePage: React.FC = () => {
         const timer = setTimeout(() => {
             setLoading(false);
         }, 1000);
-
         return () => clearTimeout(timer);
     }, []);
 
@@ -24,7 +24,7 @@ const HomePage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-black text-white overflow-hidden">
-            
+            <SplashCursor />
             {/* Hero Section */}
             <motion.section 
                 className="h-screen flex items-center justify-center relative"
@@ -40,7 +40,7 @@ const HomePage: React.FC = () => {
                         className="w-full h-full object-cover opacity-50"
                         style={{ filter: 'brightness(0.5)' }}
                     >
-                        <source src="/cooking-video-bg.mp4" type="video/mp4" />
+                        <source src="Gordon Ramsay PUNISHES an IDIOT SANDWICH.mp4" type="video/mp4" />
                     </video>
                 </div>
                 
